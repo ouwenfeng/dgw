@@ -1,0 +1,77 @@
+/*{{.Struct.Name}} {{ .Struct.Comment}} represents {{ .Struct.Table.Schema }}.{{ .Struct.Table.Name }} */
+type {{ .Struct.Name }} struct {
+{{- range .Struct.Fields }}
+	{{ .Name }} {{ .Type }}  `json:"{{.Name}},omitempty" dbName:"{{.Column.Name}},{{.Column.DataType}}"`/* {{ .Column.Name }} {{.Comment}} */
+{{- end }}
+
+action string
+targetColumns []string
+condition string
+values []interface{}
+formats string
+}
+
+//SetFormats set action: update | insert
+func (r *{{ .Struct.Name }}) SetFormats(arg string){
+	r.formats = arg
+}
+
+//SetAction set action: update | insert
+func (r *{{ .Struct.Name }}) SetAction(arg string){
+	r.action = arg
+}
+
+//SetTargetColumns set targetColumns
+func (r *{{ .Struct.Name }}) SetTargetColumns(arg []string){
+	r.targetColumns = arg
+}
+
+//SetCondition set query/update where condition
+func (r *{{ .Struct.Name }}) SetCondition(arg string){
+	r.condition = arg
+}
+
+//SetValues set values
+func (r *{{ .Struct.Name }}) SetValues(arg []interface{}){
+	r.values = arg
+}
+
+//Execute "action" on "targetColumns" with "values" by "condition"
+func (r *{{ .Struct.Name }}) Execute()(err error){
+	return
+}
+
+
+//GetTableName return the associated db table name.
+func (r *{{ .Struct.Name }})GetTableName() string{
+	return "{{.Struct.Table.Name}}"
+}
+
+// Create inserts the {{ .Struct.Name }} to the database.
+func (r *{{ .Struct.Name }}) Create(db Queryer) error {
+    {{- if .Struct.Table.AutoGenPk }}
+        err := db.QueryRow(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
+    {{- else }}
+        _, err := db.Exec(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }})
+    {{- end }}
+	if err != nil {
+        return errors.Wrap(err, "failed to insert {{ .Struct.Table.Name }}")
+	}
+	return nil
+}
+
+// Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
+func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+    var r {{ .Struct.Name }}
+    err := db.QueryRow(
+        `{{ createSelectByPkSQL .Struct }}`,
+        {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
+	if err != nil {
+        return nil, errors.Wrap(err, "failed to select {{ .Struct.Table.Name }}")
+	}
+	return &r, nil
+}

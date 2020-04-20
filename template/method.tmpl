@@ -1,0 +1,28 @@
+// Create inserts the {{ .Struct.Name }} to the database.
+func (r *{{ .Struct.Name }}) Create(db Queryer) error {
+    {{- if .Struct.Table.AutoGenPk }}
+        err := db.QueryRow(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }}).Scan({{ createInsertScan .Struct }})
+    {{- else }}
+        _, err := db.Exec(
+            `{{ createInsertSQL .Struct }}`,
+            {{ createInsertParams .Struct }})
+    {{- end }}
+	if err != nil {
+        return errors.Wrap(err, "failed to insert {{ .Struct.Table.Name }}")
+	}
+	return nil
+}
+
+// Get{{ .Struct.Name }}ByPk select the {{ .Struct.Name }} from the database.
+func Get{{ .Struct.Name }}ByPk(db Queryer, {{ createSelectByPkFuncParams .Struct }}) (*{{ .Struct.Name }}, error) {
+    var r {{ .Struct.Name }}
+    err := db.QueryRow(
+        `{{ createSelectByPkSQL .Struct }}`,
+        {{ createSelectByPkSQLParams .Struct }}).Scan({{ createSelectByPkScan .Struct }})
+	if err != nil {
+        return nil, errors.Wrap(err, "failed to select {{ .Struct.Table.Name }}")
+	}
+	return &r, nil
+}
